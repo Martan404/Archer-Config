@@ -3,6 +3,10 @@
 # Archer Configuration Toolkit is a modular and easy way to setup and configure different parts of your Arch Linux system
 # Select one or more arrows from the quiver and Archer Configuration Toolkit will install and configure features for your system automatically
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+QUIVER="${SCRIPT_DIR}/quiver"
+export SCRIPT_DIR QUIVER
+
 # Helper functions #
 show_info() {
     echo "$(tput setaf 4)$(tput bold)> $*$(tput sgr0)"
@@ -10,21 +14,22 @@ show_info() {
 export -f show_info
 # Helper functions #
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; export SCRIPT_DIR
-QUIVER="${SCRIPT_DIR}/quiver"
-confirmed=0
-
-if [[ -f $SCRIPT_DIR/bash-tui-toolkit.bash ]]; then
-    source "$SCRIPT_DIR"/bash-tui-toolkit.bash
-else
+# Source bash-tui-toolkit
+if ! [[ -f $SCRIPT_DIR/bash-tui-toolkit.bash ]]; then
     if ! curl -fsSL https://bash-tui-toolkit.timo-reymann.de/latest/bundle.bash -o "$SCRIPT_DIR/bash-tui-toolkit.bash"; then
         echo "Failed downloading bash-tui-toolkit"
         exit 1
     fi
-
-    source "$SCRIPT_DIR/bash-tui-toolkit.bash"
 fi
+source "$SCRIPT_DIR/bash-tui-toolkit.bash"
 
+# Export bash-tui-toolkit functions for arrows to use
+mapfile -t toolkit_functions < <(
+    grep -E '^[[:space:]]*[a-zA-Z_][a-zA-Z0-9_]*[[:space:]]*\(\)' "$SCRIPT_DIR"/bash-tui-toolkit.bash | sed -E 's/^[[:space:]]*([^ (]+).*/\1/'
+)
+export -f "${toolkit_functions[@]}"
+
+confirmed=0
 while [ "$confirmed" = 0 ]; do
     modules=()
     display=()
@@ -44,7 +49,7 @@ $(tput sgr0)
                           Configuration Toolkit
 -------------------------------------------------------------------------"
 
-
+    # Get arrows
     while IFS= read -r file; do
         modules+=("$file")
 
