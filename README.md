@@ -4,4 +4,8 @@ Archer Configuration Toolkit is a modular and easy way to setup and configure di
 
 Select one or more arrows from the quiver and Archer Configuration Toolkit will guide you through installing and configuring the selected features
 
-Run `bash <(curl -L https://raw.githubusercontent.com/Martan404/Archer-Config/main/archer)` in your terminal to get started
+Run 
+```
+bash <(curl -L https://raw.githubusercontent.com/Martan404/Archer-Config/main/archer)
+``` 
+in your terminal to get started
