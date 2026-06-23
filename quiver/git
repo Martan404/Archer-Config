@@ -2,7 +2,7 @@
 
 # Archer Arrow
 # NAME: Git
-# DESC: Setup git and gitui with an ssh key
+# DESC: Setup git and gitui with ssh
 
 show_info "Installing git packages"
 paru -S --needed git gitui
