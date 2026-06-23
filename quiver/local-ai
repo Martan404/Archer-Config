@@ -1,0 +1,8 @@
+#! /bin/bash
+
+# Archer Arrow
+# NAME: Local AI
+# DESC: Setup and manage local AI using Llama.cpp and Llamaman
+
+show_info "Installing AI packages"
+paru -S --needed llama.cpp-vulkan llamaman

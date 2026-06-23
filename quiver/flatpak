@@ -1,0 +1,12 @@
+#! /bin/bash
+
+# Archer Arrow
+# NAME: Flatpak
+# DESC: Setup Flatpak and KDE integration
+
+show_info "Installing flatpak packages"
+paru -S --needed flatpak flatpak-kcm discover
+
+show_info "Enabling Flatpak theming override"
+flatpak override --filesystem=xdg-config/{gtk-3.0,}
+flatpak override --env=GTK_THEME=Breeze

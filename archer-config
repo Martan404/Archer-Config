@@ -1,0 +1,95 @@
+#! /bin/bash
+
+# Archer Configuration Toolkit is a modular and easy way to setup and configure different parts of your Arch Linux system
+# Select one or more arrows from the quiver and ACT will install, configure, and provision your system automatically
+
+# Helper functions #
+show_info() {
+    echo "$(tput setaf 4)$(tput bold)> $*$(tput sgr0)"
+}
+export -f show_info
+# Helper functions #
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; export SCRIPT_DIR
+QUIVER="${SCRIPT_DIR}/quiver"
+confirmed=0
+
+if [[ -f $SCRIPT_DIR/bash-tui-toolkit.bash ]]; then
+    source "$SCRIPT_DIR"/bash-tui-toolkit.bash
+else
+    if ! curl -fsSL https://bash-tui-toolkit.timo-reymann.de/latest/bundle.bash -o "$SCRIPT_DIR/bash-tui-toolkit.bash"; then
+        echo "Failed downloading bash-tui-toolkit"
+        exit 1
+    fi
+
+    source "$SCRIPT_DIR/bash-tui-toolkit.bash"
+fi
+
+while [ "$confirmed" = 0 ]; do
+    modules=()
+    display=()
+
+    clear
+    echo -e "
+-------------------------------------------------------------------------
+$(tput setaf 4)
+             █████╗ ██████╗  ██████╗██╗  ██╗███████╗██████╗
+            ██╔══██╗██╔══██╗██╔════╝██║  ██║██╔════╝██╔══██╗
+            ███████║██████╔╝██║     ███████║█████╗  ██████╔╝
+            ██╔══██║██╔══██╗██║     ██╔══██║██╔══╝  ██╔══██╗
+            ██║  ██║██║  ██║╚██████╗██║  ██║███████╗██║  ██║
+            ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
+$(tput sgr0)
+-------------------------------------------------------------------------
+                          Configuration Toolkit
+-------------------------------------------------------------------------"
+
+
+    while IFS= read -r file; do
+        modules+=("$file")
+
+        name=$(grep '^# NAME:' "$file" | sed 's/# NAME: //')
+        desc=$(grep '^# DESC:' "$file" | sed 's/# DESC: //')
+        [ -z "$name" ] && name=$(basename "$file")
+        [ -z "$desc" ] && desc="No description available"
+
+        display+=("${name} - ${desc}")
+    done < <(find "$QUIVER" -maxdepth 1 -type f | sort)
+
+    if [ "${#display[@]}" -eq 0 ]; then
+        show_error "No arrows found in the quiver"
+        exit 1
+    fi
+
+    selected=$(checkbox "Select arrows to fire" "${display[@]}")
+    echo
+
+    if [ -z "$selected" ]; then
+        show_error "You must select at least one arrow"
+        sleep 0.5
+        continue
+    fi
+
+    confirmed=$(confirm "Fire selected arrows?")
+    echo
+done
+
+
+for index in $selected; do
+    module="${modules[$index]}"
+
+    echo "-------------------------------------------------------------------------"
+    show_info "Firing $(basename "$module") arrow"
+
+    if bash "$module"; then
+        show_success "$(basename "$module") hit the target"
+    else
+        show_error "$(basename "$module") missed the target"
+    fi
+done
+
+show_success "Done! All arrows have been fired"
+show_info "Please reboot your system"
+confirmed=$(confirm "Would you like to reboot now?")
+[[ $confirmed == 1 ]] && reboot
+[[ $confirmed == 0 ]] && exit

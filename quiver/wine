@@ -1,0 +1,21 @@
+#! /bin/bash
+
+# Archer Arrow
+# NAME: Wine
+# DESC: Setup Wine and install windows runtimes
+
+show_info() {
+    echo "$(tput setaf 4)$(tput bold)> $*$(tput sgr0)"
+}
+
+show_info "Installing Wine packages"
+paru -S --needed wine wine-gecko wine-mono winetricks
+
+show_info "Setting Wine to Win10"
+winetricks win10
+
+show_info "Installing Wine libraries and frameworks"
+winetricks -q d3dx10 d3dx9 dotnet35 dotnet40 dotnet45 dotnet48 dxvk vcrun2008 vcrun2010 vcrun2012 vcrun2019 vcrun6sp6
+
+show_info "Checking installed Wine libraries and frameworks"
+winetricks -q d3dx10 d3dx9 dotnet35 dotnet40 dotnet45 dotnet48 dxvk vcrun2008 vcrun2010 vcrun2012 vcrun2019 vcrun6sp6

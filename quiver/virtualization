@@ -1,0 +1,23 @@
+#! /bin/bash
+
+# Archer Arrow
+# NAME: Virtualization
+# DESC: Setup and manage VMs using Virt-Manager
+
+# Intel grub kernel params "intel_iommu=on iommu=pt"
+
+current_user=$USER
+
+show_info "Installing virtualization packages"
+paru -S --needed libvirt qemu-base virt-manager virt-viewer dnsmasq
+
+show_info "Configuring libvirt"
+sudo systemctl enable --now libvirtd
+sudo usermod -aG libvirt "$current_user"
+
+if sudo virsh net-list --all | grep -q "default.*active"; then
+    echo "Network default already active"
+else
+    sudo virsh net-start default
+fi
+sudo virsh net-autostart default

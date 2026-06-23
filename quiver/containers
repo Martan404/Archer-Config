@@ -1,0 +1,17 @@
+#! /bin/bash
+
+# Archer Arrow
+# NAME: Containers
+# DESC: Setup containers with podman and distrobox
+
+# https://docs.podman.io/en/latest/Commands.html
+# https://docs.podman.io/en/latest/markdown/podman-exec.1.html
+
+show_info "Installing container packages"
+paru -S --needed podman podman-compose distrobox
+
+show_info "Configuring podman"
+sudo touch /etc/subuid /etc/subgid
+usermod --add-subuids 100000-165535 --add-subgids 100000-165535 "$USER"
+podman system migrate
+sudo systemctl enable --now podman-restart.service
