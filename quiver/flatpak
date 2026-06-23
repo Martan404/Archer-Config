@@ -5,7 +5,7 @@
 # DESC: Setup Flatpak and KDE integration
 
 show_info "Installing flatpak packages"
-paru -S --needed flatpak flatpak-kcm discover
+paru -S --needed flatpak flatpak-kcm discover xdg-desktop-portal xdg-desktop-portal-kde
 
 show_info "Enabling Flatpak theming override"
 flatpak override --filesystem=xdg-config/{gtk-3.0,}
