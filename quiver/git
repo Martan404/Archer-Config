@@ -1,0 +1,62 @@
+#! /bin/bash
+
+# Archer Arrow
+# NAME: Git
+# DESC: Setup git and gitui with an ssh key
+
+show_info "Installing git packages"
+paru -S --needed git gitui
+
+show_info "Setting up git"
+confirmed=0
+while [ "$confirmed" = 0 ]; do
+    git_name=$(with_validate 'input "Git username:"' validate_present)
+    email=$(with_validate 'input "Git email:"' validate_present)
+    ssh_name=$(with_validate 'input "SSH key name:"' validate_present)
+    confirmed=$(confirm "Is this correct?")
+done
+
+git config --global user.name "$git_name"
+git config --global user.email "$email"
+ssh-keygen -t ed25519 -C "$email" -f "$HOME/.ssh/$ssh_name"
+
+bash_aliases="$HOME/.bash_aliases"
+ssh_key="id_$ssh_name"
+
+if grep -qE '^gitui\(\)' "$bash_aliases" 2>/dev/null; then
+    confirmed=0
+    confirmed=$(confirm "gitui config already exists. Update SSH key to $ssh_key?")
+
+    if [[ "$confirmed" = 1 ]]; then
+        sed -i "/^gitui()/,/^}/ s|\.ssh/id_[^\"}]*|.ssh/$ssh_key|g" "$bash_aliases"
+        show_info "Updated gitui SSH key to $ssh_key"
+    else
+        show_info "Keeping existing gitui config"
+    fi
+else
+
+    cat <<-END >>"$HOME"/.bash_aliases
+gitui() {
+        key="\${1:-\$HOME/.ssh/id_$ssh_name}"
+        eval "\$(ssh-agent)"
+        ssh-add "\$key"
+        command gitui "\${@:2}"
+        eval "\$(ssh-agent -k)"
+    }
+END
+    show_info "Created gitui config"
+fi
+
+show_info "Your public key"
+cat "$HOME/.ssh/$ssh_name.pub"
+
+show_info "Add 'New SSH key'" in Github
+
+if ! open_link "https://github.com/settings/keys" 2>/dev/null; then
+    show_info "https://github.com/settings/keys"
+fi
+for i in {5..1}; do
+    printf "\rContinuing in %s seconds..." "$i"
+    sleep 1
+done
+printf "\r\e[K"
