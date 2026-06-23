@@ -1,0 +1,13 @@
+#! /bin/bash
+
+# Archer Arrow
+# NAME: Gaming
+# DESC: Setup Gaming realted packages
+
+show_info "Installing gaming packages"
+paru -S --needed steam gamescope gamemode lib32-gamemode
+
+if pacman -Q flatpak &>/dev/null; then
+    echo "Installing Flatpak packages..."
+    flatpak install com.github.Matoking.protontricks net.davidotek.pupgui2 io.github.Faugus.faugus-launcher
+fi
