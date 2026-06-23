@@ -2,7 +2,7 @@
 
 # Archer Arrow
 # NAME: Gaming
-# DESC: Setup Gaming realted packages
+# DESC: Setup Gaming related packages
 
 show_info "Installing gaming packages"
 paru -S --needed steam gamescope gamemode lib32-gamemode
