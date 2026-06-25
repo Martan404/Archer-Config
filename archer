@@ -6,19 +6,22 @@ set -e
 
 REPO="https://github.com/Martan404/Archer-Config/archive/refs/heads/main.tar.gz"
 TMP_DIR="$(mktemp -d)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 trap 'rm -rf "$TMP_DIR"' EXIT
 
-echo "Downloading Archer Configuration Toolkit..."
+if [[ -f "$SCRIPT_DIR/archer-config" && -d "$SCRIPT_DIR/quiver" ]]; then
+    echo "Found local local files..."
+    cd "$SCRIPT_DIR"
 
-curl -fsSL "$REPO" -o "$TMP_DIR/archer-config.tar.gz"
+else
+    echo "Downloading Archer Configuration Toolkit..."
+    curl -fsSL "$REPO" -o "$TMP_DIR/archer-config.tar.gz"
 
-echo "Extracting..."
-
-tar -xzf "$TMP_DIR/archer-config.tar.gz" --strip-components=1 -C "$TMP_DIR"
-
-cd "$TMP_DIR"
+    echo "Extracting..."
+    tar -xzf "$TMP_DIR/archer-config.tar.gz" --strip-components=1 -C "$TMP_DIR"
+    cd "$TMP_DIR"
+fi
 
 echo "Starting..."
-
 exec bash ./archer-config
