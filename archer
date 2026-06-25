@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Archer Configuration Toolkit installer
+# Archer Configuration Toolkit startup script
 
 set -e
 
