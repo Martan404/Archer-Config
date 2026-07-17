@@ -22,7 +22,7 @@ if ! grep -q '^share()' ~/.bash_aliases; then
 cat >> ~/.bash_aliases <<EOF
 
 share() {
-    ln -s "\$1" "\$HOME/Share/"
+    ln "\$1" "\$HOME/Share/"
 }
 EOF
 fi
