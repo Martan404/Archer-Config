@@ -22,7 +22,7 @@ if ! grep -q '^share()' ~/.bash_aliases; then
 cat >> ~/.bash_aliases <<EOF
 
 share() {
-    ln -s "$1" "\$HOME/Share/"
+    ln -s "\$1" "\$HOME/Share/"
 }
 EOF
 fi
@@ -134,13 +134,13 @@ while true; do
                 echo
                 ;;
             3)
-                journalctl --user --user-unit="\$SERVICE" -n 50 --no-pager
+                journalctl --user --user-unit="\$SERVICE" -n 100 --no-pager
                 echo
                 echo "--- End of journal ---"
                 echo
                 ;;
             4)
-                systemctl --user status "\$SERVICE" --no-pager
+                systemctl --user status "\$SERVICE" -l --no-pager
                 echo
                 echo "--- End of status ---"
                 echo
@@ -177,13 +177,13 @@ while true; do
                 echo
                 ;;
             2)
-                journalctl --user --user-unit="\$SERVICE" -n 50 --no-pager
+                journalctl --user --user-unit="\$SERVICE" -n 100 --no-pager
                 echo
                 echo "--- End of journal ---"
                 echo
                 ;;
             3)
-                systemctl --user status "\$SERVICE" --no-pager
+                systemctl --user status "\$SERVICE" -l --no-pager
                 echo
                 echo "--- End of status ---"
                 echo
@@ -211,9 +211,7 @@ chmod +x "$HOME/.local/bin/copyparty-manager"
 
 ln "$HOME/.local/bin/copyparty-manager" "$HOME/Share/"
 
-
-
 #systemctl --user enable --now copyparty
 show_success "Copyparty is now installed and configured"
-show_info "The service can be started and managed using copyparty-manager"
+show_info "The service can be started and managed running 'copyparty-manager' in a terminal"
 show_info "Tip! Go to any folder and run copyparty to share that directory temporarily"
