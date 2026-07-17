@@ -4,8 +4,6 @@
 # NAME: Virtualization
 # DESC: Setup and manage VMs using Virt-Manager
 
-# Intel grub kernel params "intel_iommu=on iommu=pt"
-
 current_user=$USER
 
 show_info "Installing virtualization packages"
@@ -21,3 +19,19 @@ else
     sudo virsh net-start default
 fi
 sudo virsh net-autostart default
+
+echo -e "Checking CPU"
+lscpu_output=$(lscpu)
+read -r -t 1
+
+if [[ $lscpu_output == *"AuthenticAMD"* ]]; then
+	echo -e "Adding AMD kernel parameters to GRUB"
+	sed -i "s/\(GRUB_CMDLINE_LINUX_DEFAULT=\"[^\"]*\)\"/\1 amd_iommu=on iommu=pt\"/" /etc/default/grub
+
+elif [[ $lscpu_output == *"GenuineIntel"* ]]; then
+	echo -e "Adding Intel kernel parameters to GRUB"
+	sed -i "s/\(GRUB_CMDLINE_LINUX_DEFAULT=\"[^\"]*\)\"/\1 intel_iommu=on iommu=pt\"/" /etc/default/grub
+fi
+
+echo -e "Rebuilding GRUB configs"
+grub-mkconfig -o /boot/grub/grub.cfg
