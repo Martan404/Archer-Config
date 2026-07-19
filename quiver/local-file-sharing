@@ -24,6 +24,7 @@ cat >> ~/.bash_aliases <<EOF
 share-file() {
     ln "\$1" "\$HOME/Share/"  && echo "Shared to \$HOME/Share/"
 }
+alias share-file='share-file'
 EOF
 fi
 
@@ -215,3 +216,4 @@ ln "$HOME/.local/bin/copyparty-manager" "$HOME/Share/"
 show_success "Copyparty is now installed and configured"
 show_info "The service can be started and managed running 'copyparty-manager' in a terminal"
 show_info "Tip! Go to any folder and run copyparty to share that directory temporarily"
+show_info "Or use the alias 'share-file <file-name>' to create a symlink in the ~/Share directory"
