@@ -12,11 +12,24 @@ paru -S --needed copyparty cfssl ffmpeg python-pillow python-argon2-cffi  # pyth
 mkdir -p "${HOME}"/.config/copyparty/logs/
 mkdir -p "${HOME}"/Share/Upload
 
-read -rsp "admin password: " PASSWORD
-echo
+while true; do
+    read -rsp "Admin password: " password1
+    echo
+    read -rsp "Confirm password: " password2
+    echo
 
-HASH=$(copyparty --ah-alg argon2 --ah-gen "$PASSWORD" | tail -n1)
-PASSWORD=""
+    if [[ "$password1" != "$password2" ]]; then
+        show_info "Passwords do not match. Please try again"
+        password1=""
+        password2=""
+        continue
+    fi
+
+    HASH=$(copyparty --ah-alg argon2 --ah-gen "$password1" | tail -n1)
+    password1=""
+    password2=""
+    break
+done
 
 if ! grep -q '^share()' ~/.bash_aliases; then
 cat >> ~/.bash_aliases <<EOF
@@ -96,6 +109,7 @@ cat > "$HOME/.config/copyparty/copyparty.conf" <<EOF
   flags:
     grid
 EOF
+HASH=""
 
 cat > "$HOME/.local/bin/copyparty-manager" <<EOF
 #!/usr/bin/bash
@@ -112,7 +126,8 @@ while true; do
         echo "2) Disable"
         echo "3) Journal"
         echo "4) Status"
-        echo "5) Exit"
+        echo "5) Logs"
+        echo "6) Exit"
         echo
         read -rp "Choice: " choice
         clear
@@ -147,6 +162,13 @@ while true; do
                 echo
                 ;;
             5)
+                tail -n +1 -F "\${HOME}/.config/copyparty/logs/\$(date +%Y-%m%d).log" &
+                tail_pid=\$!
+                trap 'kill "\$tail_pid"' INT
+                wait "\$tail_pid"
+                echo
+                ;;
+            6)
                 clear
                 exit 0
                 ;;
@@ -162,7 +184,7 @@ while true; do
         echo "1) Enable"
         echo "2) Journal"
         echo "3) Status"
-        echo "4) Last Exit"
+        echo "4) Logs"
         echo "5) Exit"
         echo
         read -rp "Choice: " choice
@@ -190,9 +212,10 @@ while true; do
                 echo
                 ;;
             4)
-                systemctl --user show "\$SERVICE" -p Result -p ExecMainCode -p ExecMainStatus
-                echo
-                echo "--- Last exit information ---"
+                tail -n +1 -F "\${HOME}/.config/copyparty/logs/\$(date +%Y-%m%d).log" &
+                tail_pid=\$!
+                trap 'kill "\$tail_pid"' INT
+                wait "\$tail_pid"
                 echo
                 ;;
             5)
