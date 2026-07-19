@@ -182,7 +182,7 @@ while true; do
         echo "=== \$SERVICE is NOT RUNNING ==="
         echo
         echo "1) Enable"
-        echo "3) Status"
+        echo "2) Status"
         echo "3) Journal"
         echo "4) Logs"
         echo "5) Exit"
