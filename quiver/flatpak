@@ -2,7 +2,7 @@
 
 # Archer Arrow
 # NAME: Flatpak
-# DESC: Setup Flatpak and KDE integration
+# DESC: Setup Flatpaks with KDE integration
 
 show_info "Installing flatpak packages"
 paru -S --needed flatpak flatpak-kcm discover xdg-desktop-portal xdg-desktop-portal-kde
