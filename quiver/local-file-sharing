@@ -124,8 +124,8 @@ while true; do
         echo
         echo "1) Restart"
         echo "2) Disable"
-        echo "3) Journal"
-        echo "4) Status"
+        echo "3) Status"
+        echo "4) Journal"
         echo "5) Logs"
         echo "6) Exit"
         echo
@@ -150,19 +150,19 @@ while true; do
                 echo
                 ;;
             3)
-                journalctl --user --user-unit="\$SERVICE" -n 100 --no-pager
-                echo
-                echo "--- End of journal ---"
-                echo
-                ;;
-            4)
                 systemctl --user status "\$SERVICE" -l --no-pager
                 echo
                 echo "--- End of status ---"
                 echo
                 ;;
+            4)
+                journalctl --user --user-unit="\$SERVICE" -n 100 --no-pager
+                echo
+                echo "--- End of journal ---"
+                echo
+                ;;
             5)
-                tail -n +1 -F "\${HOME}/.config/copyparty/logs/\$(date +%Y-%m%d).log" &
+                tail -n +1 -F "\$(find "\${HOME}/.config/copyparty/logs" -name "\$(date +%Y-%m%d).log*" -type f | sort -V | tail -n1)" &
                 tail_pid=\$!
                 trap 'kill "\$tail_pid"' INT
                 wait "\$tail_pid"
@@ -182,8 +182,8 @@ while true; do
         echo "=== \$SERVICE is NOT RUNNING ==="
         echo
         echo "1) Enable"
-        echo "2) Journal"
         echo "3) Status"
+        echo "3) Journal"
         echo "4) Logs"
         echo "5) Exit"
         echo
@@ -200,19 +200,19 @@ while true; do
                 echo
                 ;;
             2)
-                journalctl --user --user-unit="\$SERVICE" -n 100 --no-pager
-                echo
-                echo "--- End of journal ---"
-                echo
-                ;;
-            3)
                 systemctl --user status "\$SERVICE" -l --no-pager
                 echo
                 echo "--- End of status ---"
                 echo
                 ;;
+            3)
+                journalctl --user --user-unit="\$SERVICE" -n 100 --no-pager
+                echo
+                echo "--- End of journal ---"
+                echo
+                ;;
             4)
-                tail -n +1 -F "\${HOME}/.config/copyparty/logs/\$(date +%Y-%m%d).log" &
+                tail -n +1 -F "\$(find "\${HOME}/.config/copyparty/logs" -name "\$(date +%Y-%m%d).log*" -type f | sort -V | tail -n1)" &
                 tail_pid=\$!
                 trap 'kill "\$tail_pid"' INT
                 wait "\$tail_pid"
