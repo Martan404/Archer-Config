@@ -3,9 +3,26 @@
 # Archer Configuration Toolkit is a modular and easy way to setup and configure different parts of your Arch Linux system
 # Select one or more arrows from the quiver and Archer Configuration Toolkit will install and configure features for your system automatically
 
+REPO="https://github.com/Martan404/Archer-Config/archive/refs/heads/main.tar.gz"
+TMP_DIR="$(mktemp -d)"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+trap 'rm -rf "$TMP_DIR"' EXIT
+
+if [[ -d "$SCRIPT_DIR/quiver" ]]; then
+    echo "Found local files..."
+    cd "$SCRIPT_DIR"
+
+else
+    echo "Downloading Archer Configuration Toolkit..."
+    curl -fsSL "$REPO" -o "$TMP_DIR/archer-config.tar.gz"
+
+    echo "Extracting..."
+    tar -xzf "$TMP_DIR/archer-config.tar.gz" --strip-components=1 -C "$SCRIPT_DIR"
+    cd "$SCRIPT_DIR"
+fi
+
 QUIVER="${SCRIPT_DIR}/quiver"
-export SCRIPT_DIR QUIVER
 
 # Helper functions #
 show_info() {
