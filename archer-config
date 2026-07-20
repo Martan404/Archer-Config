@@ -9,14 +9,10 @@ BRANCH="main"
 TMP_DIR="$(mktemp -d)"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SCRIPT_NAME="$(basename "$0")"
-
 SKIP_UPDATE=false
-
 [[ ! -d "$SCRIPT_DIR/quiver" ]] && SCRIPT_DIR="$PWD"
 QUIVER="${SCRIPT_DIR}/quiver"
 
-echo "$SCRIPT_DIR"
-sleep 2
 
 declare -A repo_files
 declare -A local_files
