@@ -17,12 +17,11 @@ declare -A file_status
 
 trap 'rm -rf "$TMP_DIR"' EXIT
 
-# Helper functions #
+# Helper function
 show_info() {
     echo "$(tput setaf 4)$(tput bold)> $*$(tput sgr0)"
 }
 export -f show_info
-# Helper functions #
 
 # Source bash-tui-toolkit
 if ! [[ -f $SCRIPT_DIR/bash-tui-toolkit.bash ]]; then
@@ -39,6 +38,7 @@ mapfile -t toolkit_functions < <(
 )
 export -f "${toolkit_functions[@]}"
 
+# Download and prepare update
 echo "Updating Archer Configuration Toolkit..."
 
 mkdir "$TMP_DIR/repo"
@@ -84,8 +84,6 @@ done < <(
 for file in "${!local_files[@]}"; do
 
     if [[ -z "${repo_files[$file]}" ]]; then
-
-        echo "Removing $file"
 
         file_status["$file"]="removed"
 
