@@ -11,10 +11,6 @@ TMP_DIR="$(mktemp -d)"
 TEMP_RUN=false
 SKIP_UPDATE=false
 
-declare -A repo_files
-declare -A local_files
-declare -A file_status
-
 for arg in "$@"; do
     case "$arg" in
         --no-update|--local|--debug|-n|-l|-d)
@@ -66,6 +62,10 @@ export -f "${toolkit_functions[@]}"
 
 
 if [[ "$SKIP_UPDATE" == false && "$TEMP_RUN" == false ]]; then
+    declare -A repo_files
+    declare -A local_files
+    declare -A file_status
+
     # Download and prepare update
     show_info "Updating Archer Configuration Toolkit..."
 
