@@ -10,12 +10,21 @@ TMP_DIR="$(mktemp -d)"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SCRIPT_NAME="$(basename "$0")"
 QUIVER="${SCRIPT_DIR}/quiver"
+SKIP_UPDATE=false
 
 declare -A repo_files
 declare -A local_files
 declare -A file_status
 
 trap 'rm -rf "$TMP_DIR"' EXIT
+
+for arg in "$@"; do
+    case "$arg" in
+        --no-update|--local|--debug)
+            SKIP_UPDATE=true
+            ;;
+    esac
+done
 
 # Helper function
 show_info() {
@@ -38,83 +47,76 @@ mapfile -t toolkit_functions < <(
 )
 export -f "${toolkit_functions[@]}"
 
-# Download and prepare update
-echo "Updating Archer Configuration Toolkit..."
 
-mkdir "$TMP_DIR/repo"
+if [[ "$SKIP_UPDATE" == false ]]; then
+    # Download and prepare update
+    echo "Updating Archer Configuration Toolkit..."
 
-curl -fsSL "https://github.com/$REPO/archive/refs/heads/$BRANCH.tar.gz" -o "$TMP_DIR/repo.tar.gz"
+    mkdir "$TMP_DIR/repo"
+    curl -fsSL "https://github.com/$REPO/archive/refs/heads/$BRANCH.tar.gz" -o "$TMP_DIR/repo.tar.gz"
+    tar -xzf "$TMP_DIR/repo.tar.gz" --strip-components=1 -C "$TMP_DIR/repo"
 
-tar -xzf "$TMP_DIR/repo.tar.gz" --strip-components=1 -C "$TMP_DIR/repo"
 
+    # Check repo files
+    while IFS= read -r -d '' file; do
 
-# Check repo files
-while IFS= read -r -d '' file; do
+        relative="${file#"$TMP_DIR/repo/"}"
+        repo_files["$relative"]=1
 
-    relative="${file#"$TMP_DIR/repo/"}"
+        if [[ -f "$SCRIPT_DIR/$relative" ]]; then
 
-    repo_files["$relative"]=1
+            if ! cmp -s "$file" "$SCRIPT_DIR/$relative"; then
+                file_status["$relative"]="updated"
+            fi
 
-    if [[ -f "$SCRIPT_DIR/$relative" ]]; then
+        else
+            file_status["$relative"]="new"
 
-        if ! cmp -s "$file" "$SCRIPT_DIR/$relative"; then
-            file_status["$relative"]="updated"
         fi
 
-    else
+    done < <(find "$TMP_DIR/repo" -type f -print0)
 
-        file_status["$relative"]="new"
+    # Check local files
+    while IFS= read -r -d '' file; do
 
+        relative="${file#"$SCRIPT_DIR/"}"
+        local_files["$relative"]=1
+
+    done < <(
+        find "$SCRIPT_DIR" -path "$SCRIPT_DIR/.git" -prune -o -type f -print0
+    )
+
+    # Remove old files
+    for file in "${!local_files[@]}"; do
+
+        if [[ -z "${repo_files[$file]}" ]]; then
+
+            file_status["$file"]="removed"
+            rm -f "$SCRIPT_DIR/$file"
+
+        fi
+
+    done
+
+    # Update everything except this script
+    while IFS= read -r -d '' file; do
+
+        relative="${file#"$TMP_DIR/repo/"}"
+
+        [[ "$relative" == "$SCRIPT_NAME" ]] && continue
+
+        mkdir -p "$SCRIPT_DIR/$(dirname "$relative")"
+        cp -f "$file" "$SCRIPT_DIR/$relative"
+
+    done < <(find "$TMP_DIR/repo" -type f -print0)
+
+    # Update this script
+    if [[ -f "$TMP_DIR/repo/$SCRIPT_NAME" ]]; then
+
+        cp -f "$TMP_DIR/repo/$SCRIPT_NAME" "$SCRIPT_DIR/$SCRIPT_NAME"
+        chmod +x "$SCRIPT_DIR/$SCRIPT_NAME"
     fi
-
-done < <(find "$TMP_DIR/repo" -type f -print0)
-
-# Check local files
-while IFS= read -r -d '' file; do
-
-    relative="${file#"$SCRIPT_DIR/"}"
-
-    local_files["$relative"]=1
-
-done < <(
-    find "$SCRIPT_DIR" -path "$SCRIPT_DIR/.git" -prune -o -type f -print0
-)
-
-# Remove old files
-for file in "${!local_files[@]}"; do
-
-    if [[ -z "${repo_files[$file]}" ]]; then
-
-        file_status["$file"]="removed"
-
-        rm -f "$SCRIPT_DIR/$file"
-
-    fi
-
-done
-
-# Update everything except this script
-while IFS= read -r -d '' file; do
-
-    relative="${file#"$TMP_DIR/repo/"}"
-
-    [[ "$relative" == "$SCRIPT_NAME" ]] && continue
-
-    mkdir -p "$SCRIPT_DIR/$(dirname "$relative")"
-
-    cp -f "$file" "$SCRIPT_DIR/$relative"
-
-done < <(find "$TMP_DIR/repo" -type f -print0)
-
-# Update this script
-if [[ -f "$TMP_DIR/repo/$SCRIPT_NAME" ]]; then
-
-    cp -f "$TMP_DIR/repo/$SCRIPT_NAME" "$SCRIPT_DIR/$SCRIPT_NAME"
-    
-    chmod +x "$SCRIPT_DIR/$SCRIPT_NAME"
-
 fi
-
 confirmed=0
 while [ "$confirmed" = 0 ]; do
     modules=()
