@@ -50,7 +50,7 @@ export -f "${toolkit_functions[@]}"
 
 if [[ "$SKIP_UPDATE" == false ]]; then
     # Download and prepare update
-    echo "Updating Archer Configuration Toolkit..."
+    show_info "Updating Archer Configuration Toolkit..."
 
     mkdir "$TMP_DIR/repo"
     curl -fsSL "https://github.com/$REPO/archive/refs/heads/$BRANCH.tar.gz" -o "$TMP_DIR/repo.tar.gz"
