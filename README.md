@@ -6,5 +6,5 @@ Select one or more arrows from the quiver and Archer Configuration Toolkit will 
 
 Run this in your terminal to get started
 ```
-bash <(curl -L https://raw.githubusercontent.com/Martan404/Archer-Config/main/archer)
+bash <(curl -L https://raw.githubusercontent.com/Martan404/Archer-Config/main/archer-config)
 ```
