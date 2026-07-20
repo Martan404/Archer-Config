@@ -9,12 +9,13 @@ BRANCH="main"
 TMP_DIR="$(mktemp -d)"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SCRIPT_NAME="$(basename "$0")"
-QUIVER="${SCRIPT_DIR}/quiver"
+
 SKIP_UPDATE=false
 
-if [[ ! -d "$SCRIPT_DIR/quiver" ]]; then
+if [[ ! -w "$SCRIPT_DIR" ]]; then
     SCRIPT_DIR="$(pwd)"
 fi
+QUIVER="${SCRIPT_DIR}/quiver"
 
 echo "$SCRIPT_DIR"
 sleep 10
