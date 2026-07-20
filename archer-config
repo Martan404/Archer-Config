@@ -35,10 +35,9 @@ source "$SCRIPT_DIR/bash-tui-toolkit.bash"
 
 # Export bash-tui-toolkit functions for arrows to use
 mapfile -t toolkit_functions < <(
-    grep -E '^[[:space:]]*[a-zA-Z_][a-zA-Z0-9_]*[[:space:]]*\(\)' "$SCRIPT_DIR"/bash-tui-toolkit.bash | sed -E 's/^[[:space:]]*([^ (]+).*/\1/'
+    declare -F | awk '{print $3}'
 )
 export -f "${toolkit_functions[@]}"
-
 
 echo "Updating Archer Configuration Toolkit..."
 
