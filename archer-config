@@ -12,13 +12,11 @@ SCRIPT_NAME="$(basename "$0")"
 
 SKIP_UPDATE=false
 
-if [[ ! -w "$SCRIPT_DIR" ]]; then
-    SCRIPT_DIR="$(pwd)"
-fi
+[[ ! -d "$SCRIPT_DIR/quiver" ]] && SCRIPT_DIR="$PWD"
 QUIVER="${SCRIPT_DIR}/quiver"
 
 echo "$SCRIPT_DIR"
-sleep 10
+sleep 2
 
 declare -A repo_files
 declare -A local_files
