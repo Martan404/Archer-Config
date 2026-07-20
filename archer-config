@@ -3,26 +3,19 @@
 # Archer Configuration Toolkit is a modular and easy way to setup and configure different parts of your Arch Linux system
 # Select one or more arrows from the quiver and Archer Configuration Toolkit will install and configure features for your system automatically
 
-REPO="https://github.com/Martan404/Archer-Config/archive/refs/heads/main.tar.gz"
+REPO="Martan404/Archer-Config"
+BRANCH="main"
+
 TMP_DIR="$(mktemp -d)"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_NAME="$(basename "$0")"
+QUIVER="${SCRIPT_DIR}/quiver"
+
+declare -A repo_files
+declare -A local_files
+declare -A file_status
 
 trap 'rm -rf "$TMP_DIR"' EXIT
-
-if [[ -d "$SCRIPT_DIR/quiver" ]]; then
-    echo "Found local files..."
-    cd "$SCRIPT_DIR"
-
-else
-    echo "Downloading Archer Configuration Toolkit..."
-    curl -fsSL "$REPO" -o "$TMP_DIR/archer-config.tar.gz"
-
-    echo "Extracting..."
-    tar -xzf "$TMP_DIR/archer-config.tar.gz" --strip-components=1 -C "$SCRIPT_DIR"
-    cd "$SCRIPT_DIR"
-fi
-
-QUIVER="${SCRIPT_DIR}/quiver"
 
 # Helper functions #
 show_info() {
@@ -45,6 +38,85 @@ mapfile -t toolkit_functions < <(
     grep -E '^[[:space:]]*[a-zA-Z_][a-zA-Z0-9_]*[[:space:]]*\(\)' "$SCRIPT_DIR"/bash-tui-toolkit.bash | sed -E 's/^[[:space:]]*([^ (]+).*/\1/'
 )
 export -f "${toolkit_functions[@]}"
+
+
+echo "Updating Archer Configuration Toolkit..."
+
+mkdir "$TMP_DIR/repo"
+
+curl -fsSL "https://github.com/$REPO/archive/refs/heads/$BRANCH.tar.gz" -o "$TMP_DIR/repo.tar.gz"
+
+tar -xzf "$TMP_DIR/repo.tar.gz" --strip-components=1 -C "$TMP_DIR/repo"
+
+
+# Check repo files
+while IFS= read -r -d '' file; do
+
+    relative="${file#"$TMP_DIR/repo/"}"
+
+    repo_files["$relative"]=1
+
+    if [[ -f "$SCRIPT_DIR/$relative" ]]; then
+
+        if ! cmp -s "$file" "$SCRIPT_DIR/$relative"; then
+            file_status["$relative"]="updated"
+        fi
+
+    else
+
+        file_status["$relative"]="new"
+
+    fi
+
+done < <(find "$TMP_DIR/repo" -type f -print0)
+
+# Check local files
+while IFS= read -r -d '' file; do
+
+    relative="${file#"$SCRIPT_DIR/"}"
+
+    local_files["$relative"]=1
+
+done < <(
+    find "$SCRIPT_DIR" -path "$SCRIPT_DIR/.git" -prune -o -type f -print0
+)
+
+# Remove old files
+for file in "${!local_files[@]}"; do
+
+    if [[ -z "${repo_files[$file]}" ]]; then
+
+        echo "Removing $file"
+
+        file_status["$file"]="removed"
+
+        rm -f "$SCRIPT_DIR/$file"
+
+    fi
+
+done
+
+# Update everything except this script
+while IFS= read -r -d '' file; do
+
+    relative="${file#"$TMP_DIR/repo/"}"
+
+    [[ "$relative" == "$SCRIPT_NAME" ]] && continue
+
+    mkdir -p "$SCRIPT_DIR/$(dirname "$relative")"
+
+    cp -f "$file" "$SCRIPT_DIR/$relative"
+
+done < <(find "$TMP_DIR/repo" -type f -print0)
+
+# Update this script
+if [[ -f "$TMP_DIR/repo/$SCRIPT_NAME" ]]; then
+
+    cp -f "$TMP_DIR/repo/$SCRIPT_NAME" "$SCRIPT_DIR/$SCRIPT_NAME"
+    
+    chmod +x "$SCRIPT_DIR/$SCRIPT_NAME"
+
+fi
 
 confirmed=0
 while [ "$confirmed" = 0 ]; do
