@@ -30,7 +30,6 @@ done
 if [[ "$TEMP_RUN" == true ]]; then
     SCRIPT_DIR="$TMP_DIR/Archer-Config"
     mkdir -p "$SCRIPT_DIR"
-    
 else
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     [[ ! -d "$SCRIPT_DIR/quiver" ]] && SCRIPT_DIR="$PWD"
