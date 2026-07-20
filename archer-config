@@ -6,27 +6,39 @@
 REPO="Martan404/Archer-Config"
 BRANCH="main"
 
-TMP_DIR="$(mktemp -d)"
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SCRIPT_NAME="$(basename "$0")"
+TMP_DIR="$(mktemp -d)"
+TEMP_RUN=false
 SKIP_UPDATE=false
-[[ ! -d "$SCRIPT_DIR/quiver" ]] && SCRIPT_DIR="$PWD"
-QUIVER="${SCRIPT_DIR}/quiver"
-
 
 declare -A repo_files
 declare -A local_files
 declare -A file_status
 
-trap 'rm -rf "$TMP_DIR"' EXIT
-
 for arg in "$@"; do
     case "$arg" in
-        --no-update|--local|--debug)
+        --no-update|--local|--debug|-n|-l|-d)
             SKIP_UPDATE=true
+            ;;
+    
+        --temp|--tmp|-p)
+            TEMP_RUN=true
             ;;
     esac
 done
+
+if [[ "$TEMP_RUN" == true ]]; then
+    SCRIPT_DIR="$TMP_DIR/Archer-Config"
+    mkdir -p "$SCRIPT_DIR"
+    
+else
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    [[ ! -d "$SCRIPT_DIR/quiver" ]] && SCRIPT_DIR="$PWD"
+fi
+
+QUIVER="${SCRIPT_DIR}/quiver"
+
+trap 'rm -rf "$TMP_DIR"' EXIT
 
 # Helper function
 show_info() {
