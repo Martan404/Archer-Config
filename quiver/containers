@@ -15,3 +15,8 @@ sudo touch /etc/subuid /etc/subgid
 usermod --add-subuids 100000-165535 --add-subgids 100000-165535 "$USER"
 podman system migrate
 sudo systemctl enable --now podman-restart.service
+
+# Install Kontainer if Flatpak is available
+if command -v flatpak >/dev/null 2>&1; then
+    flatpak install -y flathub io.github.DenysMb.Kontainer
+fi

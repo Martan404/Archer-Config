@@ -5,7 +5,7 @@
 # DESC: Setup Gaming related packages
 
 show_info "Installing gaming packages"
-paru -S --needed steam gamescope gamemode lib32-gamemode
+paru -S --needed steam gamescope gamemode
 
 if pacman -Q flatpak &>/dev/null; then
     echo "Installing Flatpak packages..."
