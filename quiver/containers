@@ -17,6 +17,6 @@ podman system migrate
 sudo systemctl enable --now podman-restart.service
 
 # Install Kontainer if Flatpak is available
-if command -v flatpak >/dev/null 2>&1; then
+if pacman -Q flatpak &>/dev/null; then
     flatpak install -y flathub io.github.DenysMb.Kontainer
 fi
