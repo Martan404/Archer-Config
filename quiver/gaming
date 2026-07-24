@@ -7,6 +7,9 @@
 show_info "Installing gaming packages"
 paru -S --needed steam gamescope gamemode
 
+echo -e "Enabling h264 codec in Steam"
+steam steam://unlockh264/
+
 if pacman -Q flatpak &>/dev/null; then
     echo "Installing Flatpak packages..."
     flatpak install com.github.Matoking.protontricks net.davidotek.pupgui2 io.github.Faugus.faugus-launcher
