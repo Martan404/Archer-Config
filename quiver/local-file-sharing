@@ -34,10 +34,16 @@ done
 if ! grep -q '^share()' ~/.bash_aliases; then
 cat >> ~/.bash_aliases <<EOF
 
-share-file() {
-    ln "\$1" "\$HOME/Share/"  && echo "Shared to \$HOME/Share/"
+share() {
+    local src="\$1"
+
+    if [[ -d "\$src" ]]; then
+        ln -s "\$src" "\$HOME/Share/" && echo "Shared directory to \$HOME/Share/"
+    else
+        ln "\$src" "\$HOME/Share/" && echo "Shared file to \$HOME/Share/"
+    fi
 }
-alias share-file='share-file'
+alias share='share'
 EOF
 fi
 
