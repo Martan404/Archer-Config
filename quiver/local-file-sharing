@@ -123,7 +123,10 @@ clear
 while true; do
 
     if systemctl --user is-active --quiet "\$SERVICE"; then
+        local_ip=\$(ip -4 route get 1.1.1.1 | awk '{print \$7}')
+        port="3923"
         echo "=== \$SERVICE is RUNNING ==="
+        echo "https://\${local_ip}:\${port}/"
         echo
         echo "1) Restart"
         echo "2) Disable"
