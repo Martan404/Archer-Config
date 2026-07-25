@@ -33,15 +33,12 @@ done
 
 if ! grep -q '^share()' ~/.bash_aliases; then
 cat >> ~/.bash_aliases <<EOF
-
 share() {
-    local src="\$1"
-
-    if [[ -d "\$src" ]]; then
-        ln -s "\$src" "\$HOME/Share/" && echo "Shared directory to \$HOME/Share/"
-    else
-        ln "\$src" "\$HOME/Share/" && echo "Shared file to \$HOME/Share/"
-    fi
+    for src in "\$@"; do
+        path="\$(realpath "\$src")"
+        [[ ! -e "\$path" ]] && echo -e "Error: '\$path' does not exist" >&2 && continue
+        ln -s "\$path" "\$HOME/Share/" && echo -e "Shared \$src to \$HOME/Share/"
+    done
 }
 alias share='share'
 EOF
