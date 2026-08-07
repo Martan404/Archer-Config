@@ -12,7 +12,7 @@ if ! sudo -v; then
     exit 1
 fi
 
-install_repo() {
+setup_repo() {
     show_info "Enabling CachyOS repo"
 
     curl https://mirror.cachyos.org/cachyos-repo.tar.xz -o cachyos-repo.tar.xz
@@ -46,24 +46,21 @@ remove_repo() {
 
 while true; do
     clear
-    show_info "What would you like to do?"
-    echo "1) Install CachyOS repos"
-    echo "2) Remove CachyOS repos"
-    read -rp "Choice: " choice
 
-    case "$choice" in
-        1)
-            install_repo
-            break
-            ;;
-        2)
-            remove_repo
-            break
-            ;;
-        *)
-            show_error "Invalid option"
-            sleep 1
-            continue
-            ;;
-    esac
+    if grep -Eq '^[[:space:]]*\[cachyos\]' /etc/pacman.conf; then
+        action="remove"
+        confirmed=$(confirm "Remove CachyOS repositories?")
+    else
+        action="setup"
+        confirmed=$(confirm "Setup CachyOS repositories?")
+    fi
+  
+    if [[ $confirmed == 1 ]]; then
+        "$action"_repo
+    else
+        show_info "No changes made"
+        exit 1
+    fi
+
+    break
 done
