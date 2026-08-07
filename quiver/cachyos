@@ -1,0 +1,69 @@
+#!/bin/bash
+
+# Archer Arrow
+# NAME: CachyOS repos
+# DESC: Configure CachyOS repos
+
+trap 'echo; show_info "Cancelled"; exit 130' INT
+sudo echo >/dev/null
+
+if ! sudo -v; then
+    show_error "This arrow requires sudo privileges"
+    exit 1
+fi
+
+install_repo() {
+    show_info "Enabling CachyOS repo"
+
+    curl https://mirror.cachyos.org/cachyos-repo.tar.xz -o cachyos-repo.tar.xz
+    tar xvf cachyos-repo.tar.xz && rm -rf cachyos-repo.tar.xz
+    
+    cd cachyos-repo
+    chmod +x ./cachyos-repo.sh
+    sudo ./cachyos-repo.sh
+    cd .. && rm -rf ./cachyos-repo
+
+    sudo pacman -S cachyos-rate-mirrors
+    show_info "Ranking cachyos mirrors"
+    sudo cachyos-rate-mirrors >/dev/null
+}
+
+remove_repo() {
+    show_info  "Removing CachyOS repo"
+
+    curl https://mirror.cachyos.org/cachyos-repo.tar.xz -o cachyos-repo.tar.xz
+    tar xvf cachyos-repo.tar.xz && rm -rf cachyos-repo.tar.xz
+    
+    cd cachyos-repo
+    chmod +x ./cachyos-repo.sh
+    sudo ./cachyos-repo.sh --remove
+    cd .. && rm -rf ./cachyos-repo
+
+    show_info "Cleaning up CachyOS packages"
+    sudo pacman -Rs cachyos-rate-mirrors
+
+}
+
+while true; do
+    clear
+    show_info "What would you like to do?"
+    echo "1) Install CachyOS repos"
+    echo "2) Remove CachyOS repos"
+    read -rp "Choice: " choice
+
+    case "$choice" in
+        1)
+            install_repo
+            break
+            ;;
+        2)
+            remove_repo
+            break
+            ;;
+        *)
+            show_error "Invalid option"
+            sleep 1
+            continue
+            ;;
+    esac
+done
