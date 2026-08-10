@@ -6,6 +6,8 @@
 
 current_user=$USER
 
+sudo echo
+
 show_info "Installing virtualization packages"
 paru -S --needed libvirt qemu-base virt-manager virt-viewer dnsmasq
 
@@ -26,12 +28,12 @@ read -r -t 1
 
 if [[ $lscpu_output == *"AuthenticAMD"* ]]; then
 	echo -e "Adding AMD kernel parameters to GRUB"
-	sed -i "s/\(GRUB_CMDLINE_LINUX_DEFAULT=\"[^\"]*\)\"/\1 amd_iommu=on iommu=pt\"/" /etc/default/grub
+	sudo sed -i "s/\(GRUB_CMDLINE_LINUX_DEFAULT=\"[^\"]*\)\"/\1 amd_iommu=on iommu=pt\"/" /etc/default/grub
 
 elif [[ $lscpu_output == *"GenuineIntel"* ]]; then
 	echo -e "Adding Intel kernel parameters to GRUB"
-	sed -i "s/\(GRUB_CMDLINE_LINUX_DEFAULT=\"[^\"]*\)\"/\1 intel_iommu=on iommu=pt\"/" /etc/default/grub
+	sudo sed -i "s/\(GRUB_CMDLINE_LINUX_DEFAULT=\"[^\"]*\)\"/\1 intel_iommu=on iommu=pt\"/" /etc/default/grub
 fi
 
 echo -e "Rebuilding GRUB configs"
-grub-mkconfig -o /boot/grub/grub.cfg
+sudo grub-mkconfig -o /boot/grub/grub.cfg
