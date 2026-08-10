@@ -21,15 +21,14 @@ git config --global user.email "$email"
 ssh-keygen -t ed25519 -C "$email" -f "$HOME/.ssh/$ssh_name"
 
 bash_aliases="$HOME/.bash_aliases"
-ssh_key="id_$ssh_name"
 
 if grep -qE '^gitui\(\)' "$bash_aliases" 2>/dev/null; then
     confirmed=0
-    confirmed=$(confirm "gitui config already exists. Update SSH key to $ssh_key?")
+    confirmed=$(confirm "gitui config already exists. Update SSH key to $ssh_name?")
 
     if [[ "$confirmed" = 1 ]]; then
-        sed -i "/^gitui()/,/^}/ s|\.ssh/id_[^\"}]*|.ssh/$ssh_key|g" "$bash_aliases"
-        show_info "Updated gitui SSH key to $ssh_key"
+        sed -i "/^gitui()/,/^}/ s|\.ssh/[^\"}]*|.ssh/$ssh_name|g" "$bash_aliases"
+        show_info "Updated gitui SSH key to $ssh_name"
     else
         show_info "Keeping existing gitui config"
     fi
@@ -37,7 +36,7 @@ else
 
     cat <<-END >>"$HOME"/.bash_aliases
 gitui() {
-        key="\${1:-\$HOME/.ssh/id_$ssh_name}"
+        key="\${1:-\$HOME/.ssh/$ssh_name}"
         eval "\$(ssh-agent)"
         ssh-add "\$key"
         command gitui "\${@:2}"
