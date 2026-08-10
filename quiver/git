@@ -42,6 +42,12 @@ gitui() {
         command gitui "\${@:2}"
         eval "\$(ssh-agent -k)"
     }
+
+git-login() {
+        key="\${1:-\$HOME/.ssh/$ssh_name}"
+        eval "\$(ssh-agent)"
+        ssh-add "\$key"
+    }
 END
     show_info "Created gitui config"
 fi
