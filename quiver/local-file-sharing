@@ -5,12 +5,13 @@
 # DESC: Share files locally using copyparty
 
 current_user=$USER
+public_share=$(xdg-user-dir PUBLICSHARE)
 
 show_info "Installing copyparty packages"
 paru -S --needed copyparty cfssl ffmpeg python-pillow python-argon2-cffi  # python-pyopenssl
 
 mkdir -p "${HOME}"/.config/copyparty/logs/
-mkdir -p "${HOME}"/Share/Upload
+mkdir -p "${public_share}"/Upload
 
 while true; do
     read -rsp "Admin password: " password1
@@ -37,7 +38,7 @@ share() {
     for src in "\$@"; do
         path="\$(realpath "\$src")"
         [[ ! -e "\$path" ]] && echo -e "Error: '\$path' does not exist" >&2 && continue
-        ln -s "\$path" "\$HOME/Share/" && echo -e "Shared \$src to \$HOME/Share/"
+        ln -s "\$path" "\$public_share" && echo -e "Shared \$src to \$public_share"
     done
 }
 alias share='share'
@@ -90,7 +91,7 @@ cat > "$HOME/.config/copyparty/copyparty.conf" <<EOF
   admin: ${HASH}
 
 [/]
-  /home/\${USER}/Share
+  \${public_share}
   accs:
     r: *
     rwdma: admin
@@ -98,14 +99,14 @@ cat > "$HOME/.config/copyparty/copyparty.conf" <<EOF
     grid
 
 [/copyparty-manager]
-  /home/\${USER}/Share/copyparty-manager
+  \${public_share}/copyparty-manager
   flags:
     unlistcr
     unlistcw
     unlist
 
 [/Upload]
-  /home/\${USER}/Share/Upload
+  \${public_share}/Upload
   accs:
     w: *
     rwdma: admin
@@ -239,10 +240,10 @@ EOF
 
 chmod +x "$HOME/.local/bin/copyparty-manager"
 
-ln "$HOME/.local/bin/copyparty-manager" "$HOME/Share/"
+ln "$HOME/.local/bin/copyparty-manager" "$public_share"
 
 #systemctl --user enable --now copyparty
 show_success "Copyparty is now installed and configured"
 show_info "The service can be started and managed running 'copyparty-manager' in a terminal"
 show_info "Tip! Go to any folder and run copyparty to share that directory temporarily"
-show_info "Or use the alias 'share-file <file-name>' to create a symlink in the ~/Share directory"
+show_info "Or use the alias 'share-file <file-name>' to create a symlink in the $public_share directory"
