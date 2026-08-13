@@ -99,20 +99,21 @@ cat > "$HOME/.config/copyparty/copyparty.conf" <<EOF
     grid
 
 [/copyparty-manager]
-  \${public_share}/copyparty-manager
+  ${public_share}/copyparty-manager
   flags:
     unlistcr
     unlistcw
     unlist
 
 [/Upload]
-  \${public_share}/Upload
+  ${public_share}/Upload
   accs:
     w: *
     rwdma: admin
   flags:
     grid
 EOF
+
 HASH=""
 
 cat > "$HOME/.local/bin/copyparty-manager" <<EOF
@@ -246,4 +247,8 @@ ln "$HOME/.local/bin/copyparty-manager" "$public_share"
 show_success "Copyparty is now installed and configured"
 show_info "The service can be started and managed running 'copyparty-manager' in a terminal"
 show_info "Tip! Go to any folder and run copyparty to share that directory temporarily"
+<<<<<<< HEAD
 show_info "Or use the alias 'share <file-name>' to create a symlink in the '$public_share' directory"
+=======
+show_info "Or use the alias 'share-file <file-name>' to create a symlink in the $public_share directory"
+>>>>>>> main
