@@ -116,7 +116,7 @@ EOF
 
 HASH=""
 
-cat > "$HOME/.local/bin/copyparty-manager" <<EOF
+copyparty_manager_script() {
 #!/usr/bin/bash
 
 SERVICE="copyparty"
@@ -124,11 +124,11 @@ SERVICE="copyparty"
 clear
 while true; do
 
-    if systemctl --user is-active --quiet "\$SERVICE"; then
-        local_ip=\$(ip -4 route get 1.1.1.1 | awk '{print \$7}')
+    if systemctl --user is-active --quiet "$SERVICE"; then
+        local_ip=$(ip -4 route get 1.1.1.1 | awk '{print \$7}')
         port="3923"
-        echo "=== \$SERVICE is RUNNING ==="
-        echo "https://\${local_ip}:\${port}/"
+        echo "=== $SERVICE is RUNNING ==="
+        echo "https://${local_ip}:${port}/"
         echo
         echo "1) Restart"
         echo "2) Disable"
@@ -140,40 +140,40 @@ while true; do
         read -rp "Choice: " choice
         clear
 
-        case "\$choice" in
+        case "$choice" in
             1)
-                if systemctl --user restart "\$SERVICE"; then
-                    echo "\$SERVICE restarted."
+                if systemctl --user restart "$SERVICE"; then
+                    echo "$SERVICE restarted."
                 else
-                    echo "Failed to restart \$SERVICE."
+                    echo "Failed to restart $SERVICE."
                 fi
                 echo
                 ;;
             2)
-                if systemctl --user disable --now "\$SERVICE"; then
-                    echo "\$SERVICE disabled and stopped."
+                if systemctl --user disable --now "$SERVICE"; then
+                    echo "$SERVICE disabled and stopped."
                 else
-                    echo "Failed to disable \$SERVICE."
+                    echo "Failed to disable $SERVICE."
                 fi
                 echo
                 ;;
             3)
-                systemctl --user status "\$SERVICE" -l --no-pager
+                systemctl --user status "$SERVICE" -l --no-pager
                 echo
                 echo "--- End of status ---"
                 echo
                 ;;
             4)
-                journalctl --user --user-unit="\$SERVICE" -n 100 --no-pager
+                journalctl --user --user-unit="$SERVICE" -n 100 --no-pager
                 echo
                 echo "--- End of journal ---"
                 echo
                 ;;
             5)
-                tail -n +1 -F "\$(find "\${HOME}/.config/copyparty/logs" -name "\$(date +%Y-%m%d).log*" -type f | sort -V | tail -n1)" &
-                tail_pid=\$!
-                trap 'kill "\$tail_pid"' INT
-                wait "\$tail_pid"
+                tail -n +1 -F "$(find "${HOME}/.config/copyparty/logs" -name "$(date +%Y-%m%d).log*" -type f | sort -V | tail -n1)" &
+                tail_pid=$!
+                trap 'kill "$tail_pid"' INT
+                wait "$tail_pid"
                 echo
                 ;;
             6)
@@ -187,7 +187,7 @@ while true; do
         esac
 
     else
-        echo "=== \$SERVICE is NOT RUNNING ==="
+        echo "=== $SERVICE is NOT RUNNING ==="
         echo
         echo "1) Enable"
         echo "2) Status"
@@ -198,32 +198,32 @@ while true; do
         read -rp "Choice: " choice
         clear
 
-        case "\$choice" in
+        case "$choice" in
             1)
-                if systemctl --user enable --now "\$SERVICE"; then
-                    echo "\$SERVICE enabled and started."
+                if systemctl --user enable --now "$SERVICE"; then
+                    echo "$SERVICE enabled and started."
                 else
-                    echo "Failed to enable \$SERVICE."
+                    echo "Failed to enable $SERVICE."
                 fi
                 echo
                 ;;
             2)
-                systemctl --user status "\$SERVICE" -l --no-pager
+                systemctl --user status "$SERVICE" -l --no-pager
                 echo
                 echo "--- End of status ---"
                 echo
                 ;;
             3)
-                journalctl --user --user-unit="\$SERVICE" -n 100 --no-pager
+                journalctl --user --user-unit="$SERVICE" -n 100 --no-pager
                 echo
                 echo "--- End of journal ---"
                 echo
                 ;;
             4)
-                tail -n +1 -F "\$(find "\${HOME}/.config/copyparty/logs" -name "\$(date +%Y-%m%d).log*" -type f | sort -V | tail -n1)" &
-                tail_pid=\$!
-                trap 'kill "\$tail_pid"' INT
-                wait "\$tail_pid"
+                tail -n +1 -F "$(find "${HOME}/.config/copyparty/logs" -name "$(date +%Y-%m%d).log*" -type f | sort -V | tail -n1)" &
+                tail_pid=$!
+                trap 'kill "$tail_pid"' INT
+                wait "$tail_pid"
                 echo
                 ;;
             5)
@@ -237,7 +237,9 @@ while true; do
         esac
     fi
 done
-EOF
+}
+
+awk '/^copyparty_manager_script\(\) \{$/ { found=1; next } found && /^}$/ { exit } found { print }' "$0" > $HOME/.local/bin/copyparty-manager
 
 chmod +x "$HOME/.local/bin/copyparty-manager"
 
@@ -247,8 +249,4 @@ ln "$HOME/.local/bin/copyparty-manager" "$public_share"
 show_success "Copyparty is now installed and configured"
 show_info "The service can be started and managed running 'copyparty-manager' in a terminal"
 show_info "Tip! Go to any folder and run copyparty to share that directory temporarily"
-<<<<<<< HEAD
 show_info "Or use the alias 'share <file-name>' to create a symlink in the '$public_share' directory"
-=======
-show_info "Or use the alias 'share-file <file-name>' to create a symlink in the $public_share directory"
->>>>>>> main
