@@ -239,7 +239,8 @@ while true; do
 done
 }
 
-awk '/^copyparty_manager_script\(\) \{$/ { found=1; next } found && /^}$/ { exit } found { print }' "$0" > $HOME/.local/bin/copyparty-manager
+awk '/^copyparty_manager_script\(\) \{$/ { found=1; next } found && /^}$/ { exit } found { print }' "${BASH_SOURCE[0]}" > $HOME/.local/bin/copyparty-manager
+#awk '/^copyparty_manager_script\(\) \{$/ { found=1; next } found && /^}$/ { exit } found { sub(/^    /, ""); print }' "${BASH_SOURCE[0]}" > "$HOME/.local/bin/copyparty-manager"
 
 chmod +x "$HOME/.local/bin/copyparty-manager"
 
