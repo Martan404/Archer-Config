@@ -1,0 +1,337 @@
+#! /bin/bash
+
+# Archer Arrow
+# NAME: Arch ISO
+# DESC: Download an Arch ISO and create a bootable GRUB entry
+
+ISO_NAME="archlinux.iso"
+UPDATE_SCRIPT="$HOME/.local/bin/update-arch-iso"
+
+EFI_MIN_TOTAL=$((1900 * 1024 * 1024))
+EFI_MIN_FREE=$((1600 * 1024 * 1024))
+
+declare -a STORAGE_DEVICES=()
+declare -a STORAGE_MOUNTS=()
+declare -a STORAGE_OPTIONS=()
+
+sudo -v || exit 1
+
+cancel_script() {
+    rm -f "$ISO_PATH" 2>/dev/null || sudo rm -f "$ISO_PATH" 2>/dev/null || true
+    exit 130
+}
+
+trap cancel_script INT
+
+is_efi() {
+    local device="$1"
+    lsblk -nrpo PATH,PARTTYPE | awk -v device="$device" 'tolower($1)==tolower(device) && tolower($2)=="c12a7328-f81f-11d2-ba4b-00a0c93ec93b"{found=1} END{exit !found}'
+}
+
+is_encrypted() {
+    local device="$1"
+    lsblk -s -nrpo TYPE "$device" 2>/dev/null | grep -q '^crypt$'
+}
+
+add_storage() {
+    local device="$1"
+    local mount="$2"
+    local label="$3"
+
+    STORAGE_DEVICES+=("$device")
+    STORAGE_MOUNTS+=("$mount")
+    STORAGE_OPTIONS+=("$label")
+}
+
+add_efi() {
+    local device mount total free
+
+    while read -r device; do
+        [[ -n "$device" ]] || continue
+
+        mount="$(findmnt -rn -S "$device" -o TARGET | head -n1)"
+        [[ -n "$mount" ]] || continue
+
+        read -r total free < <(df -B1 --output=size,avail "$mount" | tail -n1)
+
+        if (( total > EFI_MIN_TOTAL && free >= EFI_MIN_FREE )); then
+            add_storage "$device" "$mount" "EFI — $mount (Recommended)"
+        fi
+    done < <(lsblk -nrpo PATH,PARTTYPE | awk 'tolower($2)=="c12a7328-f81f-11d2-ba4b-00a0c93ec93b"{print $1}')
+}
+
+scan_storage() {
+    local device fstype mount
+
+    while read -r device fstype; do
+        [[ -n "$device" ]] || continue
+        [[ -n "$fstype" ]] || continue
+
+        case "$fstype" in
+            swap|iso9660|udf)
+                continue
+                ;;
+        esac
+
+        is_efi "$device" && continue
+        is_encrypted "$device" && continue
+
+        while read -r mount; do
+            [[ -n "$mount" ]] || continue
+            
+            if [[ "$fstype" == "btrfs" ]]; then
+                case "$mount" in
+                    /swap|/.*|/var*|/srv)
+                        
+                        ;;
+                    *)
+                        add_storage "$device" "$mount" "$device — $mount"
+                        ;;
+                esac
+            else
+                add_storage "$device" "$mount" "$device — $mount"
+            fi
+        done < <(findmnt -rn -S "$device" -o TARGET)
+
+    done < <(lsblk -nrpo NAME,FSTYPE)
+}
+
+select_storage() {
+    STORAGE_DEVICES=()
+    STORAGE_MOUNTS=()
+    STORAGE_OPTIONS=()
+    
+    add_efi
+    scan_storage
+
+    if (( ${#STORAGE_OPTIONS[@]} == 0 )); then
+        show_error "No suitable storage locations were found."
+        return 1
+    fi
+
+    local selected
+    selected="$(list "Where should the Arch ISO be stored?" "${STORAGE_OPTIONS[@]}")"
+
+    ISO_DEVICE="${STORAGE_DEVICES[$selected]}"
+    ISO_MOUNT="${STORAGE_MOUNTS[$selected]}"
+    
+    show_info "Selected storage: $ISO_DEVICE mounted at $ISO_MOUNT"
+
+    select_storage_directory
+    ISO_PATH="$ISO_DIR/$ISO_NAME"
+}
+
+select_storage_directory() {
+    local relative_path
+
+    relative_path="$(input "Storage directory on $ISO_MOUNT")"
+    relative_path="${relative_path#/}"
+    relative_path="${relative_path%/}"
+
+    if [[ "$ISO_MOUNT" == "/" ]]; then
+        ISO_DIR="/$relative_path"
+    elif [[ -n "$relative_path" ]]; then
+        ISO_DIR="$ISO_MOUNT/$relative_path"
+    else
+        ISO_DIR="$ISO_MOUNT"
+    fi
+
+    if [[ ! -d "$ISO_DIR" ]]; then
+        if ! mkdir -p "$ISO_DIR"; then
+            sudo mkdir -p "$ISO_DIR" || return 1
+        fi
+    fi
+
+    #show_info "ISO storage directory: $ISO_DIR"
+}
+
+get_storage_info() {
+    local source target fstype fsroot
+
+    source="$(findmnt -T "$ISO_MOUNT" -no SOURCE | head -n1)"
+    target="$(findmnt -T "$ISO_MOUNT" -no TARGET | head -n1)"
+    fstype="$(findmnt -T "$ISO_MOUNT" -no FSTYPE | head -n1)"
+    fsroot="$(findmnt -T "$ISO_MOUNT" -no FSROOT | head -n1)"
+
+    ISO_DEVICE="${source%%\[*}"
+    ISO_MOUNT="$target"
+    ISO_FSTYPE="$fstype"
+    ISO_FSROOT="$fsroot"
+    ISO_UUID="$(lsblk -no UUID "$ISO_DEVICE")"
+
+    #show_info "Device: $ISO_DEVICE"
+    #show_info "Mount: $ISO_MOUNT"
+    #show_info "Filesystem: $ISO_FSTYPE"
+    #show_info "Filesystem root: $ISO_FSROOT"
+    #show_info "UUID: $ISO_UUID"
+}
+
+get_grub_iso_path() {
+    local relative_path
+
+    relative_path="${ISO_PATH#"$ISO_MOUNT"}"
+    relative_path="/${relative_path#/}"
+
+    if [[ "$ISO_FSTYPE" == "btrfs" && "$ISO_FSROOT" != "/" ]]; then
+        GRUB_ISO_PATH="${ISO_FSROOT%/}$relative_path"
+    else
+        GRUB_ISO_PATH="$relative_path"
+    fi
+
+    #show_info "GRUB ISO path: $GRUB_ISO_PATH"
+}
+
+get_arch_mirror() {
+    while read -r mirror; do
+        [[ -n "$mirror" ]] || continue
+
+        mirror="${mirror%%/\$repo/os/\$arch*}"
+
+        if curl -fsI --max-time 5 "$mirror/iso/latest/archlinux-x86_64.iso" >/dev/null; then
+            ARCH_MIRROR="$mirror"
+            #show_info "Using Arch Linux mirror: $ARCH_MIRROR"
+            return 0
+        fi
+    done < <(awk '$1 == "Server" {print $3}' /etc/pacman.d/mirrorlist)
+
+    show_error "None of the configured Arch Linux mirrors are reachable."
+    exit 1
+}
+
+download_arch_iso() {
+    local checksum_url="$ARCH_MIRROR/iso/latest/sha256sums.txt"
+    local iso_url="$ARCH_MIRROR/iso/latest/archlinux-x86_64.iso"
+    local expected actual
+
+    expected="$(curl -fsSL "$checksum_url" | awk '$2 == "archlinux-x86_64.iso" {print $1}')"
+
+    [[ -n "$expected" ]] || {
+        show_error "Could not get the Arch Linux ISO checksum."
+        exit 1
+    }
+
+    show_info "Downloading Arch Linux ISO..."
+
+    if ! curl -fL --progress-bar "$iso_url" -o "$ISO_PATH"; then
+        show_info "Retrying with sudo..."
+
+        sudo curl -fL --progress-bar "$iso_url" -o "$ISO_PATH" || {
+            show_error "Failed to download Arch Linux ISO."
+            rm -f "$ISO_PATH" 2>/dev/null || sudo rm -f "$ISO_PATH" 2>/dev/null || true
+            exit 1
+        }
+    fi
+
+    actual="$(sha256sum "$ISO_PATH" | awk '{print $1}')"
+
+    if [[ "$actual" != "$expected" ]]; then
+        rm -f "$ISO_PATH" 2>/dev/null || sudo rm -f "$ISO_PATH" 2>/dev/null || true
+        show_error "Downloaded ISO failed checksum verification."
+        exit 1
+    fi
+
+    show_info "Arch Linux ISO downloaded and verified."
+}
+
+create_grub_entry() {
+    local grub_cfg="/etc/grub.d/44_arch-iso"
+
+    cat <<EOF | sudo tee $grub_cfg >/dev/null
+#!/bin/sh
+exec tail -n +3 \$0
+menuentry "Boot Arch ISO" {
+    set iso_path="$GRUB_ISO_PATH"
+    set root_uuid="$ISO_UUID"
+
+    search --no-floppy --set=iso_part --fs-uuid \$root_uuid
+    probe -u \$iso_part --set=iso_uuid
+
+    loopback loop (\$iso_part)\$iso_path
+    linux (loop)/arch/boot/x86_64/vmlinuz-linux img_dev=/dev/disk/by-uuid/\$iso_uuid img_loop=\$iso_path copytoram archisobasedir=arch earlymodules=loop
+    initrd (loop)/arch/boot/x86_64/initramfs-linux.img
+}
+EOF
+    sudo chmod +x $grub_cfg
+    show_info "GRUB entry created."
+}
+
+update_grub() {
+    sudo grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB --recheck >/dev/null
+    sudo grub-mkconfig -o /boot/grub/grub.cfg >/dev/null
+
+    show_info "GRUB configuration updated."
+}
+
+create_update_script() {
+    #!/bin/bash
+    ISO_PATH="FULL_ISO_PATH"
+
+    show_info() { 
+        echo "$(tput setaf 4)$(tput bold)> $*$(tput sgr0)" 
+    }
+
+    while read -r mirror; do
+        [[ -n "$mirror" ]] || continue
+
+        mirror="${mirror%%/\$repo/os/\$arch*}"
+
+        if curl -fsI --max-time 5 "$mirror/iso/latest/archlinux-x86_64.iso" >/dev/null; then
+            ARCH_MIRROR="$mirror"
+            show_info "Using Arch Linux mirror: $ARCH_MIRROR"
+            break
+        fi
+    done < <(awk '$1 == "Server" {print $3}' /etc/pacman.d/mirrorlist)
+
+    checksum_url="$ARCH_MIRROR/iso/latest/sha256sums.txt"
+    iso_url="$ARCH_MIRROR/iso/latest/archlinux-x86_64.iso"
+
+    expected="$(curl -fsSL "$checksum_url" | awk '$2 == "archlinux-x86_64.iso" {print $1}')"
+
+    [[ -n "$expected" ]] || {
+        show_error "Could not get the Arch Linux ISO checksum."
+        exit 1
+    }
+
+    actual="$(sha256sum "$ISO_PATH" | awk '{print $1}')"
+
+    if [[ "$actual" == "$expected" ]]; then
+        show_info "Arch Linux ISO is already up to date."
+        exit 0
+    fi
+
+    show_info "New Arch Linux ISO available."
+    show_info "Downloading..."
+
+    if ! curl -fL --progress-bar "$iso_url" -o "$ISO_PATH"; then
+        show_info "Permission denied. Retrying with sudo..."
+
+        sudo curl -fL --progress-bar "$iso_url" -o "$ISO_PATH" || {
+            show_error "Failed to download Arch Linux ISO."
+            exit 1
+        }
+
+        sudo chown "$(id -u):$(id -g)" "$ISO_PATH"
+    fi
+
+    actual="$(sha256sum "$ISO_PATH" | awk '{print $1}')"
+
+    if [[ "$actual" != "$expected" ]]; then
+        show_error "Downloaded ISO failed checksum verification."
+        exit 1
+    fi
+
+    show_info "Arch Linux ISO successfully updated."
+}
+
+select_storage
+get_storage_info
+get_grub_iso_path
+get_arch_mirror
+download_arch_iso
+create_grub_entry
+update_grub
+
+awk '/^create_update_script\(\) \{$/ { found=1; next } found && /^}$/ { exit } found { sub(/^    /, ""); print }' "${BASH_SOURCE[0]}" > "$UPDATE_SCRIPT"
+show_info "update-arch-iso script created."
+sed -i "s|^[[:space:]]*ISO_PATH=.*|ISO_PATH=\"$ISO_PATH\"|" "$UPDATE_SCRIPT"
+chmod +x "$UPDATE_SCRIPT"
