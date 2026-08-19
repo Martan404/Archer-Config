@@ -24,7 +24,7 @@ for arg in "$@"; do
 done
 
 if [[ "$TEMP_RUN" == true ]]; then
-    SCRIPT_DIR="$TMP_DIR/Archer-Config"
+    SCRIPT_DIR="$TMP_DIR/$SCRIPT_NAME"
     mkdir -p "$SCRIPT_DIR"
 
     curl -fsSL "https://github.com/$REPO/archive/refs/heads/$BRANCH.tar.gz" -o "$TMP_DIR/repo.tar.gz"
@@ -32,7 +32,7 @@ if [[ "$TEMP_RUN" == true ]]; then
 
 else
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    [[ ! -d "$SCRIPT_DIR/quiver" ]] && SCRIPT_DIR="$PWD"
+    [[ $SCRIPT_DIR = "/dev/fd" ]] && SCRIPT_DIR="$(pwd)/Archer-Config" && mkdir $SCRIPT_DIR
 fi
 
 QUIVER="${SCRIPT_DIR}/quiver"
@@ -44,22 +44,6 @@ show_info() {
     echo "$(tput setaf 4)$(tput bold)> $*$(tput sgr0)"
 }
 export -f show_info
-
-# Source bash-tui-toolkit
-if ! [[ -f $SCRIPT_DIR/bash-tui-toolkit.bash ]]; then
-    if ! curl -fsSL https://bash-tui-toolkit.timo-reymann.de/latest/bundle.bash -o "$SCRIPT_DIR/bash-tui-toolkit.bash"; then
-        echo "Failed downloading bash-tui-toolkit"
-        exit 1
-    fi
-fi
-source "$SCRIPT_DIR/bash-tui-toolkit.bash"
-
-# Export bash-tui-toolkit functions for arrows to use
-mapfile -t toolkit_functions < <(
-    declare -F | awk '{print $3}'
-)
-export -f "${toolkit_functions[@]}"
-
 
 if [[ "$SKIP_UPDATE" == false && "$TEMP_RUN" == false ]]; then
     declare -A repo_files
@@ -134,6 +118,22 @@ if [[ "$SKIP_UPDATE" == false && "$TEMP_RUN" == false ]]; then
         chmod +x "$SCRIPT_DIR/$SCRIPT_NAME"
     fi
 fi
+
+# Source bash-tui-toolkit
+if ! [[ -f $SCRIPT_DIR/bash-tui-toolkit.bash ]]; then
+    if ! curl -fsSL https://bash-tui-toolkit.timo-reymann.de/latest/bundle.bash -o "$SCRIPT_DIR/bash-tui-toolkit.bash"; then
+        echo "Failed downloading bash-tui-toolkit"
+        exit 1
+    fi
+fi
+source "$SCRIPT_DIR/bash-tui-toolkit.bash"
+
+# Export bash-tui-toolkit functions for arrows to use
+mapfile -t toolkit_functions < <(
+    declare -F | awk '{print $3}'
+)
+export -f "${toolkit_functions[@]}"
+
 confirmed=0
 while [ "$confirmed" = 0 ]; do
     modules=()
