@@ -21,5 +21,5 @@ sudo systemctl enable --now podman-restart.service
 # Install Kontainer if Flatpak is available
 if pacman -Q flatpak &>/dev/null; then
     show_info "Installing Kontainer"
-    flatpak install -y --noninteractive flathub io.github.DenysMb.Kontainer
+    flatpak install --system --assumeyes --noninteractive flathub io.github.DenysMb.Kontainer
 fi
