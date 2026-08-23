@@ -5,7 +5,7 @@
 # DESC: Configure CachyOS repos
 
 trap 'echo; show_info "Cancelled"; exit 130' INT
-sudo echo >/dev/null
+sudo -v || exit 1
 
 if ! sudo -v; then
     show_error "This arrow requires sudo privileges"

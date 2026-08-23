@@ -5,6 +5,7 @@
 # DESC: Setup git and gitui with ssh
 
 show_info "Installing git packages"
+paru -Syu
 paru -S --needed git gitui
 
 show_info "Setting up git"

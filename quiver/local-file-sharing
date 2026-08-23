@@ -8,6 +8,7 @@ current_user=$USER
 public_share=$(xdg-user-dir PUBLICSHARE)
 
 show_info "Installing copyparty packages"
+paru -Syu
 paru -S --needed copyparty cfssl ffmpeg python-pillow python-argon2-cffi  # python-pyopenssl
 
 mkdir -p "${HOME}"/.config/copyparty/logs/

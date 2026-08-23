@@ -5,6 +5,7 @@
 # DESC: Setup Flatpaks with KDE integration
 
 show_info "Installing flatpak packages"
+paru -Syu
 paru -S --needed flatpak flatpak-kcm discover xdg-desktop-portal xdg-desktop-portal-kde
 
 show_info "Enabling Flatpak theming override"

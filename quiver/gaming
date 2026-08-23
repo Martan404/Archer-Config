@@ -5,6 +5,7 @@
 # DESC: Setup Gaming related packages
 
 show_info "Installing gaming packages"
+paru -Syu
 paru -S --needed steam gamescope gamemode
 
 echo -e "Enabling h264 codec in Steam"

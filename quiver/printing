@@ -5,6 +5,7 @@
 # DESC: Setup printing support
 
 show_info "Installing printing packages"
+paru -Syu
 paru -S --needed cups cups-pdf cups-pk-helper foomatic-db-ppds foomatic-db-engine foomatic-db-nonfree-ppds
 
 show_info "Enabling cups printer socket"

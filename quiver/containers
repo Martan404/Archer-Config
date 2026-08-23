@@ -8,6 +8,7 @@
 # https://docs.podman.io/en/latest/markdown/podman-exec.1.html
 
 show_info "Installing container packages"
+paru -Syu
 paru -S --needed podman podman-compose distrobox
 
 show_info "Configuring podman"

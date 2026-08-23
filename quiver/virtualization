@@ -6,9 +6,8 @@
 
 current_user=$USER
 
-sudo echo
-
 show_info "Installing virtualization packages"
+paru -Syu
 paru -S --needed libvirt qemu-base virt-manager virt-viewer dnsmasq
 
 show_info "Configuring libvirt"

@@ -9,6 +9,7 @@ show_info() {
 }
 
 show_info "Installing Wine packages"
+paru -Syu
 paru -S --needed wine wine-gecko wine-mono winetricks
 
 show_info "Setting Wine to Win10"
