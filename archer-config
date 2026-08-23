@@ -38,6 +38,7 @@ fi
 QUIVER="${SCRIPT_DIR}/quiver"
 
 trap 'rm -rf "$TMP_DIR"' EXIT
+trap 'exit 130' INT
 
 # Helper function
 show_info() {
