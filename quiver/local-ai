@@ -6,4 +6,4 @@
 
 show_info "Installing AI packages"
 paru -Syu
-paru -S --needed llama.cpp-vulkan llamaman
+paru -S --needed llama.cpp-vulkan-bin llamaman
