@@ -185,6 +185,8 @@ $(tput sgr0)
     echo
 done
 
+# Ask for sudo password
+sudo -v
 
 for index in $selected; do
     module="${modules[$index]}"
