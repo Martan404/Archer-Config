@@ -12,12 +12,14 @@ paru -S --needed podman podman-compose distrobox
 
 show_info "Configuring podman"
 sudo touch /etc/subuid /etc/subgid
-usermod --add-subuids 100000-165535 --add-subgids 100000-165535 "$USER"
+sudo usermod --add-subuids 100000-165535 --add-subgids 100000-165535 "$USER"
+sudo cp -r /usr/share/containers/ /etc/containers/
+
 podman system migrate
 sudo systemctl enable --now podman-restart.service
 
 # Install Kontainer if Flatpak is available
 if pacman -Q flatpak &>/dev/null; then
     show_info "Installing Kontainer"
-    flatpak install -y flathub io.github.DenysMb.Kontainer
+    flatpak install -y --noninteractive flathub io.github.DenysMb.Kontainer
 fi
