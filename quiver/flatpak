@@ -6,8 +6,7 @@
 
 show_info "Installing flatpak packages"
 paru -Syu
-paru -S --needed flatpak flatpak-kcm discover xdg-desktop-portal xdg-desktop-portal-kde
+paru -S --needed flatpak flatpak-kcm discover xdg-desktop-portal-kde
 
-show_info "Enabling Flatpak theming override"
-flatpak override --filesystem=xdg-config/{gtk-3.0,}
-flatpak override --env=GTK_THEME=Breeze
+echo -e "Fix game controller remote access pop up spam in KDE Plasma"
+flatpak permission-set kde-authorized remote-desktop "" yes
